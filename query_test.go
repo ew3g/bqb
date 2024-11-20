@@ -13,7 +13,8 @@ func TestA(t *testing.T) {
 }
 
 func TestArrays(t *testing.T) {
-	q := New("(?) (?) (?) (?) (?)", []string{"a", "b"}, []string{}, []*string{}, []int{1, 2}, []*int{})
+	paramsInput := []interface{}{[]string{"a", "b"}, []string{}, []*string{}, []int{1, 2}, []*int{}}
+	q := New("(?) (?) (?) (?) (?)", paramsInput...)
 	sql, params, _ := q.ToSql()
 
 	if len(params) != 6 {

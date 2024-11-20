@@ -8,6 +8,76 @@ import (
 	"strings"
 )
 
+type DialectReplacer interface {
+	getReplacedSQL() (string, error)
+}
+
+type RawReplacer struct {
+	Sql    string
+	Params []any
+}
+
+func (r *RawReplacer) getReplacedSQL() (string, error) {
+	for _, param := range r.Params {
+		p, err := paramToRaw(param)
+		if err != nil {
+			return "", err
+		}
+		r.Sql = strings.Replace(r.Sql, paramPh, p, 1)
+	}
+	return r.Sql, nil
+}
+
+type MySQLReplacer struct {
+	Sql    string
+	Params []any
+}
+
+func (m *MySQLReplacer) getReplacedSQL() (string, error) {
+	const (
+		questionMark                = "?"
+		doubleQuestionMarkDelimiter = "??"
+	)
+	return strings.ReplaceAll(m.Sql, doubleQuestionMarkDelimiter, questionMark), nil
+}
+
+type SQLReplacer struct {
+	Sql    string
+	Params []any
+}
+
+func (s *SQLReplacer) getReplacedSQL() (string, error) {
+	const (
+		questionMark                = "?"
+		doubleQuestionMarkDelimiter = "??"
+	)
+	return strings.ReplaceAll(s.Sql, doubleQuestionMarkDelimiter, questionMark), nil
+}
+
+type PgSQLReplacer struct {
+	Sql    string
+	Params []any
+}
+
+func (p *PgSQLReplacer) getReplacedSQL() (string, error) {
+	const (
+		questionMark                = "?"
+		doubleQuestionMarkDelimiter = "??"
+	)
+	p.Sql = strings.ReplaceAll(p.Sql, doubleQuestionMarkDelimiter, questionMark)
+	parts := strings.Split(p.Sql, paramPh)
+	var builder strings.Builder
+	for i := range p.Params {
+		_, _ = builder.WriteString(parts[i] + "$" + strconv.Itoa(i+1))
+	}
+	builder.WriteString(parts[len(parts)-1])
+	return builder.String(), nil
+}
+
+func dialectReplace2(replacer DialectReplacer) (string, error) {
+	return replacer.getReplacedSQL()
+}
+
 func dialectReplace(dialect Dialect, sql string, params []any) (string, error) {
 	const (
 		questionMark                = "?"
