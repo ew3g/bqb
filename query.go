@@ -125,7 +125,14 @@ func (q *Query) ToMysql() (string, []any, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	sql, err = dialectReplace(MYSQL, sql, params)
+
+	m := &MySQLReplacer{
+		SQL:    sql,
+		Params: params,
+	}
+	//sql, err = dialectReplace(MYSQL, sql, params)
+	//sql, err = dialectReplace(m)
+	sql, err = m.getReplacedSQL()
 	return sql, params, err
 }
 
@@ -135,7 +142,15 @@ func (q *Query) ToPgsql() (string, []any, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	sql, err = dialectReplace(PGSQL, sql, params)
+
+	pgSQLReplacer := &PgSQLReplacer{
+		SQL:    sql,
+		Params: params,
+	}
+
+	//sql, err = dialectReplace(PGSQL, sql, params)
+	//sql, err = dialectReplace(pgSQLReplacer)
+	sql, err = pgSQLReplacer.getReplacedSQL()
 	return sql, params, err
 }
 
@@ -147,7 +162,13 @@ func (q *Query) ToRaw() (string, error) {
 		return "", err
 	}
 
-	sql, err = dialectReplace(RAW, sql, params)
+	rawReplacer := &RawReplacer{
+		SQL:    sql,
+		Params: params,
+	}
+
+	//sql, err = dialectReplace(rawReplacer)
+	sql, err = rawReplacer.getReplacedSQL()
 	return sql, err
 }
 
@@ -158,7 +179,15 @@ func (q *Query) ToSql() (string, []any, error) {
 	if err != nil {
 		return "", nil, err
 	}
-	sql, err = dialectReplace(SQL, sql, params)
+
+	sqlReplacer := &SQLReplacer{
+		SQL:    sql,
+		Params: params,
+	}
+
+	//sql, err = dialectReplace(sqlReplacer)
+	//sql, err = dialectReplace(SQL, sql, params)
+	sql, err = sqlReplacer.getReplacedSQL()
 	return sql, params, err
 }
 

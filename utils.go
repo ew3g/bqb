@@ -13,7 +13,7 @@ type DialectReplacer interface {
 }
 
 type RawReplacer struct {
-	Sql    string
+	SQL    string
 	Params []any
 }
 
@@ -23,39 +23,34 @@ func (r *RawReplacer) getReplacedSQL() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		r.Sql = strings.Replace(r.Sql, paramPh, p, 1)
+		r.SQL = strings.Replace(r.SQL, paramPh, p, 1)
 	}
-	return r.Sql, nil
+	return r.SQL, nil
 }
 
 type MySQLReplacer struct {
-	Sql    string
+	SQL    string
 	Params []any
 }
 
 func (m *MySQLReplacer) getReplacedSQL() (string, error) {
-	const (
-		questionMark                = "?"
-		doubleQuestionMarkDelimiter = "??"
-	)
-	return strings.ReplaceAll(m.Sql, doubleQuestionMarkDelimiter, questionMark), nil
+	const questionMark = "?"
+
+	return strings.ReplaceAll(m.SQL, paramPh, questionMark), nil
 }
 
 type SQLReplacer struct {
-	Sql    string
+	SQL    string
 	Params []any
 }
 
 func (s *SQLReplacer) getReplacedSQL() (string, error) {
-	const (
-		questionMark                = "?"
-		doubleQuestionMarkDelimiter = "??"
-	)
-	return strings.ReplaceAll(s.Sql, doubleQuestionMarkDelimiter, questionMark), nil
+	const questionMark = "?"
+	return strings.ReplaceAll(s.SQL, paramPh, questionMark), nil
 }
 
 type PgSQLReplacer struct {
-	Sql    string
+	SQL    string
 	Params []any
 }
 
@@ -64,8 +59,8 @@ func (p *PgSQLReplacer) getReplacedSQL() (string, error) {
 		questionMark                = "?"
 		doubleQuestionMarkDelimiter = "??"
 	)
-	p.Sql = strings.ReplaceAll(p.Sql, doubleQuestionMarkDelimiter, questionMark)
-	parts := strings.Split(p.Sql, paramPh)
+	p.SQL = strings.ReplaceAll(p.SQL, doubleQuestionMarkDelimiter, questionMark)
+	parts := strings.Split(p.SQL, paramPh)
 	var builder strings.Builder
 	for i := range p.Params {
 		_, _ = builder.WriteString(parts[i] + "$" + strconv.Itoa(i+1))
@@ -74,43 +69,43 @@ func (p *PgSQLReplacer) getReplacedSQL() (string, error) {
 	return builder.String(), nil
 }
 
-func dialectReplace2(replacer DialectReplacer) (string, error) {
-	return replacer.getReplacedSQL()
-}
+//func dialectReplace(replacer DialectReplacer) (string, error) {
+//	return replacer.getReplacedSQL()
+//}
 
-func dialectReplace(dialect Dialect, sql string, params []any) (string, error) {
-	const (
-		questionMark                = "?"
-		doubleQuestionMarkDelimiter = "??"
-		parameterPlaceholder        = paramPh
-	)
-
-	switch dialect {
-	case RAW:
-		for _, param := range params {
-			p, err := paramToRaw(param)
-			if err != nil {
-				return "", err
-			}
-			sql = strings.Replace(sql, paramPh, p, 1)
-		}
-		return sql, nil
-	case MYSQL, SQL:
-		return strings.ReplaceAll(sql, paramPh, questionMark), nil
-	case PGSQL:
-		sql = strings.ReplaceAll(sql, doubleQuestionMarkDelimiter, questionMark)
-		parts := strings.Split(sql, paramPh)
-		var builder strings.Builder
-		for i := range params {
-			_, _ = builder.WriteString(parts[i] + "$" + strconv.Itoa(i+1))
-		}
-		builder.WriteString(parts[len(parts)-1])
-		return builder.String(), nil
-	default:
-		// No replacement defined for dialect
-		return sql, nil
-	}
-}
+//func dialectReplace(dialect Dialect, sql string, params []any) (string, error) {
+//	const (
+//		questionMark                = "?"
+//		doubleQuestionMarkDelimiter = "??"
+//		parameterPlaceholder        = paramPh
+//	)
+//
+//	switch dialect {
+//	case RAW:
+//		for _, param := range params {
+//			p, err := paramToRaw(param)
+//			if err != nil {
+//				return "", err
+//			}
+//			sql = strings.Replace(sql, paramPh, p, 1)
+//		}
+//		return sql, nil
+//	case MYSQL, SQL:
+//		return strings.ReplaceAll(sql, paramPh, questionMark), nil
+//	case PGSQL:
+//		sql = strings.ReplaceAll(sql, doubleQuestionMarkDelimiter, questionMark)
+//		parts := strings.Split(sql, paramPh)
+//		var builder strings.Builder
+//		for i := range params {
+//			_, _ = builder.WriteString(parts[i] + "$" + strconv.Itoa(i+1))
+//		}
+//		builder.WriteString(parts[len(parts)-1])
+//		return builder.String(), nil
+//	default:
+//		// No replacement defined for dialect
+//		return sql, nil
+//	}
+//}
 
 func convertArg(text string, arg any) (string, []any, []error) {
 	var newArgs []any
