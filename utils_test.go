@@ -4,14 +4,22 @@ import (
 	"testing"
 )
 
-func Test_dialectReplace_raw_dialect(t *testing.T) {
-	wantSQL := "SELECT * FROM t WHERE id = 1 AND name = 'foo'"
+type TestReplacer struct {
+	SQL string
+}
 
-	r := RawReplacer{
-		SQL:    "SELECT * FROM t WHERE id = {{xX_PARAM_Xx}} AND name = {{xX_PARAM_Xx}}",
-		Params: []interface{}{1, "foo"},
+func (tr TestReplacer) GetReplacedSQL() (string, error) {
+	return tr.SQL, nil
+}
+
+func Test_dialectReplacer_dialect(t *testing.T) {
+	tr := TestReplacer{
+		SQL: "my test sql",
 	}
-	sql, err := r.getReplacedSQL()
+
+	wantSQL := "my test sql"
+
+	sql, err := dialectReplace(tr)
 
 	if err != nil {
 		t.Error("valid SQL statement should not return error")
@@ -19,62 +27,5 @@ func Test_dialectReplace_raw_dialect(t *testing.T) {
 
 	if sql != wantSQL {
 		t.Errorf("unexpected SQL statement: want %s got %s", wantSQL, sql)
-	}
-}
-
-func Test_dialectReplace_mySQL_replacer(t *testing.T) {
-	wantSQL := "SELECT * FROM t WHERE id = ? AND name = ?"
-
-	m := MySQLReplacer{
-		SQL:    "SELECT * FROM t WHERE id = {{xX_PARAM_Xx}} AND name = {{xX_PARAM_Xx}}",
-		Params: []interface{}{1, "foo"},
-	}
-
-	sql, err := m.getReplacedSQL()
-
-	if err != nil {
-		t.Error("valid SQL statement should not return error")
-	}
-
-	if sql != wantSQL {
-		t.Errorf("unexpected statement: want %s got %s", wantSQL, sql)
-	}
-}
-
-func Test_dialectReplace_Sql_replacer(t *testing.T) {
-	wantSQL := "SELECT * FROM t WHERE id = ? AND name = ?"
-
-	s := SQLReplacer{
-		SQL:    "SELECT * FROM t WHERE id = {{xX_PARAM_Xx}} AND name = {{xX_PARAM_Xx}}",
-		Params: []interface{}{1, "foo"},
-	}
-
-	sql, err := s.getReplacedSQL()
-
-	if err != nil {
-		t.Error("valid SQL statement should not return error")
-	}
-
-	if sql != wantSQL {
-		t.Errorf("unexpected statement: want %s got %s", wantSQL, sql)
-	}
-}
-
-func Test_dialectReplace_PgSQLReplacer(t *testing.T) {
-	wantSQL := "SELECT * FROM t WHERE id = $1 AND name = $2"
-
-	p := PgSQLReplacer{
-		SQL:    "SELECT * FROM t WHERE id = {{xX_PARAM_Xx}} AND name = {{xX_PARAM_Xx}}",
-		Params: []interface{}{1, "foo"},
-	}
-
-	sql, err := p.getReplacedSQL()
-
-	if err != nil {
-		t.Errorf("valid SQL statement should not return error")
-	}
-
-	if sql != wantSQL {
-		t.Errorf("unexpected statement: want %s got %s", wantSQL, sql)
 	}
 }

@@ -4,69 +4,11 @@ import (
 	"database/sql/driver"
 	"encoding/json"
 	"fmt"
-	"strconv"
 	"strings"
 )
 
-type DialectReplacer interface {
-	getReplacedSQL() (string, error)
-}
-
-type RawReplacer struct {
-	SQL    string
-	Params []any
-}
-
-func (r *RawReplacer) getReplacedSQL() (string, error) {
-	for _, param := range r.Params {
-		p, err := paramToRaw(param)
-		if err != nil {
-			return "", err
-		}
-		r.SQL = strings.Replace(r.SQL, paramPh, p, 1)
-	}
-	return r.SQL, nil
-}
-
-type MySQLReplacer struct {
-	SQL    string
-	Params []any
-}
-
-func (m *MySQLReplacer) getReplacedSQL() (string, error) {
-	const questionMark = "?"
-
-	return strings.ReplaceAll(m.SQL, paramPh, questionMark), nil
-}
-
-type SQLReplacer struct {
-	SQL    string
-	Params []any
-}
-
-func (s *SQLReplacer) getReplacedSQL() (string, error) {
-	const questionMark = "?"
-	return strings.ReplaceAll(s.SQL, paramPh, questionMark), nil
-}
-
-type PgSQLReplacer struct {
-	SQL    string
-	Params []any
-}
-
-func (p *PgSQLReplacer) getReplacedSQL() (string, error) {
-	const (
-		questionMark                = "?"
-		doubleQuestionMarkDelimiter = "??"
-	)
-	p.SQL = strings.ReplaceAll(p.SQL, doubleQuestionMarkDelimiter, questionMark)
-	parts := strings.Split(p.SQL, paramPh)
-	var builder strings.Builder
-	for i := range p.Params {
-		_, _ = builder.WriteString(parts[i] + "$" + strconv.Itoa(i+1))
-	}
-	builder.WriteString(parts[len(parts)-1])
-	return builder.String(), nil
+func dialectReplace(dr DialectReplacer) (string, error) {
+	return dr.GetReplacedSQL()
 }
 
 func convertArg(text string, arg any) (string, []any, []error) {
@@ -219,31 +161,5 @@ func makePart(text string, args ...any) QueryPart {
 		Text:   text,
 		Params: newArgs,
 		Errs:   errs,
-	}
-}
-
-func paramToRaw(param any) (string, error) {
-	switch p := param.(type) {
-	case bool:
-		return fmt.Sprintf("%v", p), nil
-	case float32, float64, int, int8, int16, int32, int64,
-		uint8, uint16, uint32, uint64:
-		return fmt.Sprintf("%v", p), nil
-	case *int:
-		if p == nil {
-			return "NULL", nil
-		}
-		return fmt.Sprintf("%v", *p), nil
-	case string:
-		return fmt.Sprintf("'%v'", p), nil
-	case *string:
-		if p == nil {
-			return "NULL", nil
-		}
-		return fmt.Sprintf("'%v'", *p), nil
-	case nil:
-		return "NULL", nil
-	default:
-		return "", fmt.Errorf("unsupported type for Raw query: %T", p)
 	}
 }
