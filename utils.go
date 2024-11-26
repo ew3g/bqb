@@ -69,44 +69,6 @@ func (p *PgSQLReplacer) getReplacedSQL() (string, error) {
 	return builder.String(), nil
 }
 
-//func dialectReplace(replacer DialectReplacer) (string, error) {
-//	return replacer.getReplacedSQL()
-//}
-
-//func dialectReplace(dialect Dialect, sql string, params []any) (string, error) {
-//	const (
-//		questionMark                = "?"
-//		doubleQuestionMarkDelimiter = "??"
-//		parameterPlaceholder        = paramPh
-//	)
-//
-//	switch dialect {
-//	case RAW:
-//		for _, param := range params {
-//			p, err := paramToRaw(param)
-//			if err != nil {
-//				return "", err
-//			}
-//			sql = strings.Replace(sql, paramPh, p, 1)
-//		}
-//		return sql, nil
-//	case MYSQL, SQL:
-//		return strings.ReplaceAll(sql, paramPh, questionMark), nil
-//	case PGSQL:
-//		sql = strings.ReplaceAll(sql, doubleQuestionMarkDelimiter, questionMark)
-//		parts := strings.Split(sql, paramPh)
-//		var builder strings.Builder
-//		for i := range params {
-//			_, _ = builder.WriteString(parts[i] + "$" + strconv.Itoa(i+1))
-//		}
-//		builder.WriteString(parts[len(parts)-1])
-//		return builder.String(), nil
-//	default:
-//		// No replacement defined for dialect
-//		return sql, nil
-//	}
-//}
-
 func convertArg(text string, arg any) (string, []any, []error) {
 	var newArgs []any
 	var errs []error

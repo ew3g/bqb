@@ -130,8 +130,7 @@ func (q *Query) ToMysql() (string, []any, error) {
 		SQL:    sql,
 		Params: params,
 	}
-	//sql, err = dialectReplace(MYSQL, sql, params)
-	//sql, err = dialectReplace(m)
+
 	sql, err = m.getReplacedSQL()
 	return sql, params, err
 }
@@ -148,8 +147,6 @@ func (q *Query) ToPgsql() (string, []any, error) {
 		Params: params,
 	}
 
-	//sql, err = dialectReplace(PGSQL, sql, params)
-	//sql, err = dialectReplace(pgSQLReplacer)
 	sql, err = pgSQLReplacer.getReplacedSQL()
 	return sql, params, err
 }
@@ -185,8 +182,6 @@ func (q *Query) ToSql() (string, []any, error) {
 		Params: params,
 	}
 
-	//sql, err = dialectReplace(sqlReplacer)
-	//sql, err = dialectReplace(SQL, sql, params)
 	sql, err = sqlReplacer.getReplacedSQL()
 	return sql, params, err
 }
